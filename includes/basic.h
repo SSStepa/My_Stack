@@ -9,19 +9,21 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <math.h>
 
 /**
  * @brief Work of function available results.
  */
 enum WORK_RES {
-    OK = 0, // all good
-    WRIN = 1, // function got bad args
-    NOMEM = 2, // not enough memory
-    FILEERR = 4, // no file to open.
-
-    STACK_DATA = 11, // wrong data format
-    STACK_CAP = 12, // zero capacity
-    STACK_OVERFLOW = 13  // size > capacity
+    OK       = 0, // all good
+    WRIN     = 1, // function got bad args
+    NOMEM    = 2, // not enough memory
+    FILEERR  = 4, // no file to open.
+ 
+    STACK_DATA      = 11, // wrong data format
+    STACK_CAP       = 12, // zero capacity
+    STACK_OVERFLOW  = 13,  // size > capacity
+    STACK_UNDERFLOW = 14 // size < 0;
 };
 
 /**
@@ -34,7 +36,15 @@ struct String {
     size_t len;
 };
 
+/**
+ * Const to say that number is zero(all numbers less than EPSILON are regarded as zeros)
+ */
+const double EPSILON = 0.0001;
 
+/**
+ * function to check if number is zero
+ */
+bool IsZero(double x);
 //------------------------------------------------------------- COLORS ------------------------------------------------------------------------
 /**
  * Basic colors

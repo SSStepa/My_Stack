@@ -23,7 +23,7 @@
 )
 
 DEBUGGER(
-const double STACK_EL_POISON = 1.0; // TODO: nan initialization
+const double STACK_EL_POISON = NAN;
 const int BUFF_DUMP_SIZE = 100;
 )
 
@@ -45,6 +45,10 @@ WORK_RES StackCtor(
         DEBUGGER(,const char *Myname, const char *fileCreationName, int creationLineName, const  char *creationFunctionName)
     );
 WORK_RES StackDtor(stack_t *stk);
+
+WORK_RES StackPush(stack_t *stk, double Elem);
+
+WORK_RES StackPop(stack_t *stk, double *elem);
 
 WORK_RES StackIsValid(stack_t stk);
 

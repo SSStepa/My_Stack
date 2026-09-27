@@ -44,6 +44,78 @@ WORK_RES StackCtor(
     return OK;
 }
 
+WORK_RES StackPush(stack_t *stk, double Elem) 
+{
+    assert(stk);
+
+    WORK_RES statusCode = OK;
+
+    if ((statusCode = StackIsValid(*stk)) != OK) {
+        return $err("NOT VALID STACK GOT BY FUNCTION", statusCode);
+    }
+
+    if (stk -> capacity == stk -> size) {
+        stk -> capacity *= 2;
+        double *temp = (double *) realloc(stk -> data, (stk -> capacity)*sizeof(double)); // TODO: make universal
+        if (temp == NULL) {
+            return $err("NOT ENOUGH MEMORY", NOMEM);
+            DEBUGGER(StackDump(stk);)
+        }
+        stk -> data = temp;
+
+        DEBUGGER(
+            for (size_t ind = stk -> size; ind < stk -> capacity; ind++) {
+                (stk -> data)[ind] = STACK_EL_POISON;
+            }
+        )
+    }
+
+    (stk -> data)[(stk -> size)++] = Elem;
+
+
+    if ((statusCode = StackIsValid(*stk)) != OK) {
+        return $err("NOT VALID STACK AFTER PUSH", statusCode);
+    }
+
+    return OK;
+}
+
+WORK_RES StackPop(stack_t *stk, double *elem)
+{
+    assert(stk);
+
+    WORK_RES statusCode = OK;
+
+    if ((statusCode = StackIsValid(*stk)) != OK) {
+        return $err("NOT VALID STACK GOT BY FUNCTION", statusCode);
+    }
+    
+    if (stk -> size == 0)
+        return $err("CAN'T GET ELEMENT FROM STACK WITHOUT ELEMENTS", STACK_UNDERFLOW);
+
+    if ((stk ->capacity)/4 > stk -> size) {
+        stk -> capacity = stk -> size;
+        double *temp = (double *) realloc(stk -> data, (stk -> capacity)*sizeof(double)); //TODO: make universal
+        if (temp == NULL) {
+            return $err("NOT ENOUGH MEMORY", NOMEM);
+            DEBUGGER(StackDump(stk);)
+        }
+        stk -> data = temp;
+        
+    }
+
+    *elem = (stk -> data)[--(stk -> size)];
+    DEBUGGER(
+    (stk -> data)[(stk -> size)] = STACK_EL_POISON;
+    )
+
+    if ((statusCode = StackIsValid(*stk)) != OK) {
+        return $err("NOT VALID STACK AFTER POP", statusCode);
+    }
+
+    return OK;
+}
+
 WORK_RES StackDtor(stack_t *stk)
 {
     WORK_RES statusCode = OK;
@@ -52,6 +124,7 @@ WORK_RES StackDtor(stack_t *stk)
     }
 
     free(stk -> data);
+    stk -> data = 0;
     stk -> capacity = 0;
     stk -> size = 0;
 
@@ -99,7 +172,7 @@ WORK_RES StackDump(stack_t *stk)
         );
 
         for (size_t ind = 0; ind < stk -> capacity; ind++) {
-            if ((stk -> data)[ind] == STACK_EL_POISON)
+            if (IsZero((stk -> data)[ind] - STACK_EL_POISON) || isnan((stk -> data)[ind]))
                 fprintf(logFile, "* [%llu] %lg POISON\n", ind, (stk -> data)[ind]); // TODO: Change to be universal
             else
                 fprintf(logFile, "  [%llu] %lg\n", ind, (stk -> data)[ind]); // TODO: Change to be universal

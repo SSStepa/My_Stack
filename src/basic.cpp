@@ -53,3 +53,11 @@ WORK_RES SetUpLog()
     return OK;
 }
 
+bool IsZero(double x)
+{
+    if (fabs(x) <= EPSILON)
+        return true;
+    else
+        return false;
+}
+
