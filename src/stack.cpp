@@ -23,7 +23,7 @@ WORK_RES StackCtor(
     }
 
     stk -> capacity = capacity;
-    stk -> data = (double *) calloc(capacity, sizeof(double)); // TODO: make universal
+    stk -> data = (stackDataType *) calloc(capacity, sizeof(stackDataType));
 
     DEBUGGER(
         stk -> MyName = MyName;
@@ -44,7 +44,7 @@ WORK_RES StackCtor(
     return OK;
 }
 
-WORK_RES StackPush(stack_t *stk, double Elem) 
+WORK_RES StackPush(stack_t *stk, stackDataType Elem) 
 {
     assert(stk);
 
@@ -56,7 +56,7 @@ WORK_RES StackPush(stack_t *stk, double Elem)
 
     if (stk -> capacity == stk -> size) {
         stk -> capacity *= 2;
-        double *temp = (double *) realloc(stk -> data, (stk -> capacity)*sizeof(double)); // TODO: make universal
+        stackDataType *temp = (stackDataType *) realloc(stk -> data, (stk -> capacity)*sizeof(stackDataType));
         if (temp == NULL) {
             return $err("NOT ENOUGH MEMORY", NOMEM);
             DEBUGGER(StackDump(stk);)
@@ -80,7 +80,7 @@ WORK_RES StackPush(stack_t *stk, double Elem)
     return OK;
 }
 
-WORK_RES StackPop(stack_t *stk, double *elem)
+WORK_RES StackPop(stack_t *stk, stackDataType *elem)
 {
     assert(stk);
 
@@ -95,7 +95,7 @@ WORK_RES StackPop(stack_t *stk, double *elem)
 
     if ((stk ->capacity)/4 > stk -> size) {
         stk -> capacity = stk -> size;
-        double *temp = (double *) realloc(stk -> data, (stk -> capacity)*sizeof(double)); //TODO: make universal
+        stackDataType *temp = (stackDataType *) realloc(stk -> data, (stk -> capacity)*sizeof(stackDataType));
         if (temp == NULL) {
             return $err("NOT ENOUGH MEMORY", NOMEM);
             DEBUGGER(StackDump(stk);)
@@ -131,6 +131,16 @@ WORK_RES StackDtor(stack_t *stk)
     return OK;
 }
 
+WORK_RES GetStackCapacity(size_t *capacity)
+{
+    assert(capacity);
+    printf("Hi. What capacity of the stack do you need: ");
+    if (scanf("%llu", capacity) == 1)
+        return OK;
+    else
+        return WRIN;
+
+}
 
 WORK_RES StackIsValid(stack_t stk)
 {
@@ -172,10 +182,16 @@ WORK_RES StackDump(stack_t *stk)
         );
 
         for (size_t ind = 0; ind < stk -> capacity; ind++) {
-            if (IsZero((stk -> data)[ind] - STACK_EL_POISON) || isnan((stk -> data)[ind]))
-                fprintf(logFile, "* [%llu] %lg POISON\n", ind, (stk -> data)[ind]); // TODO: Change to be universal
-            else
-                fprintf(logFile, "  [%llu] %lg\n", ind, (stk -> data)[ind]); // TODO: Change to be universal
+            if (IsZero((stk -> data)[ind] - STACK_EL_POISON) || isnan((stk -> data)[ind])) {
+                fprintf(logFile, "* [%llu]", ind);
+                fprintf(logFile, FILL_FOR_PRINTF, (stk -> data)[ind]);
+                fprintf(logFile, "POISON\n");
+
+            } else {
+                fprintf(logFile, "  [%llu]", ind);
+                fprintf(logFile, FILL_FOR_PRINTF, (stk -> data)[ind]);
+                fprintf(logFile, "\n");
+            }
         }
         fprintf(logFile, "capacity is <%llu> and size if <%llu>\n\n", stk -> capacity, stk -> size);
     }
@@ -195,10 +211,15 @@ WORK_RES StackDump(stack_t *stk)
     );
 
     for (size_t ind = 0; ind < stk -> capacity; ind++) {
-        if ((stk -> data)[ind] == STACK_EL_POISON)
-            printf("* [%s%llu%s] <%s%lg%s> POISON\n", CYN, ind, COLOR_RESET, GRN, (stk -> data)[ind], COLOR_RESET); // TODO: Change to be universal
-        else
-            printf("  [%s%llu%s] <%s%lg%s>\n", CYN, ind, COLOR_RESET, GRN, (stk -> data)[ind], COLOR_RESET); // TODO: Change to be universal
+        if ((stk -> data)[ind] == STACK_EL_POISON) {
+            printf("* [%s%llu%s] <%s" , CYN, ind, COLOR_RESET, GRN);
+            printf(FILL_FOR_PRINTF, (stk -> data)[ind]);
+            printf("%s> POISON\n", COLOR_RESET);
+        } else {
+            printf("  [%s%llu%s] <%s" , CYN, ind, COLOR_RESET, GRN);
+            printf(FILL_FOR_PRINTF , (stk -> data)[ind]);
+            printf("%s>\n", COLOR_RESET);
+        }
     }
     printf("capacity is <%s%llu%s> and size if <%s%llu%s>\n\n", GRN, stk -> capacity, COLOR_RESET, GRN, stk -> size, COLOR_RESET);
 

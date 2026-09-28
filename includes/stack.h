@@ -22,13 +22,16 @@
     ) \
 )
 
+typedef char stackDataType;
+#define FILL_FOR_PRINTF "%c"
+
 DEBUGGER(
-const double STACK_EL_POISON = NAN;
+const stackDataType STACK_EL_POISON = NAN;
 const int BUFF_DUMP_SIZE = 100;
 )
 
 struct stack_t {
-    double *data;
+    stackDataType *data;
     size_t size;
     size_t capacity;
 
@@ -46,9 +49,11 @@ WORK_RES StackCtor(
     );
 WORK_RES StackDtor(stack_t *stk);
 
-WORK_RES StackPush(stack_t *stk, double Elem);
+WORK_RES StackPush(stack_t *stk, stackDataType Elem);
 
-WORK_RES StackPop(stack_t *stk, double *elem);
+WORK_RES StackPop(stack_t *stk, stackDataType *elem);
+
+WORK_RES GetStackCapacity(size_t *capacity);
 
 WORK_RES StackIsValid(stack_t stk);
 
