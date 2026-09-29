@@ -17,6 +17,7 @@ WORK_RES StackCtor(
     if (capacity == 0) {
         return $err("CAN'T CREATE STACK WITH 0 CAPACITY", WRIN);
     }
+
     if (stk -> capacity != 0 || stk -> data != 0 || stk -> size != 0) {
         DEBUGGER(StackDump(stk);)
         return $err("INCORRECT STACK TO INITIALIZE", WRIN);
@@ -24,6 +25,9 @@ WORK_RES StackCtor(
 
     stk -> capacity = capacity;
     stk -> data = (stackDataType *) calloc(capacity, sizeof(stackDataType));
+    if (stk -> data == NULL) {
+        return $err("NOT ENOUGH MEMORY TO CREATE STACK", NOMEM);
+    }
 
     DEBUGGER(
         stk -> MyName = MyName;
@@ -58,8 +62,8 @@ WORK_RES StackPush(stack_t *stk, stackDataType Elem)
         stk -> capacity *= 2;
         stackDataType *temp = (stackDataType *) realloc(stk -> data, (stk -> capacity)*sizeof(stackDataType));
         if (temp == NULL) {
-            return $err("NOT ENOUGH MEMORY", NOMEM);
             DEBUGGER(StackDump(stk);)
+            return $err("NOT ENOUGH MEMORY", NOMEM);
         }
         stk -> data = temp;
 
@@ -71,7 +75,6 @@ WORK_RES StackPush(stack_t *stk, stackDataType Elem)
     }
 
     (stk -> data)[(stk -> size)++] = Elem;
-
 
     if ((statusCode = StackIsValid(*stk)) != OK) {
         return $err("NOT VALID STACK AFTER PUSH", statusCode);
@@ -97,8 +100,8 @@ WORK_RES StackPop(stack_t *stk, stackDataType *elem)
         stk -> capacity = stk -> size;
         stackDataType *temp = (stackDataType *) realloc(stk -> data, (stk -> capacity)*sizeof(stackDataType));
         if (temp == NULL) {
-            return $err("NOT ENOUGH MEMORY", NOMEM);
             DEBUGGER(StackDump(stk);)
+            return $err("PROBLEM WHILE TRYING TO REALLOC TO SMALLER SIZE", NOMEM);
         }
         stk -> data = temp;
         
