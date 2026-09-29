@@ -26,9 +26,13 @@ typedef char stackDataType;
 #define FILL_FOR_PRINTF "%c"
 
 DEBUGGER(
-const stackDataType STACK_EL_POISON = NAN;
+const stackDataType STACK_EL_POISON = 0;
+const stackDataType STACK_CANARY_FIRST = 'S';
+const stackDataType STACK_CANARY_SECOND = 'U';
 const int BUFF_DUMP_SIZE = 100;
+
 )
+
 
 struct stack_t {
     stackDataType *data;
@@ -40,6 +44,7 @@ struct stack_t {
     const char *fileCreationName;
     int   creationLineName;
     const char *creationFunctionName;
+    stackDataType *canaryData;
     )
 };
 
@@ -50,15 +55,15 @@ WORK_RES StackCtor(
 WORK_RES StackDtor(stack_t *stk);
 
 WORK_RES StackPush(stack_t *stk, stackDataType Elem);
+WORK_RES ResizeUp(stack_t *stk);
 
 WORK_RES StackPop(stack_t *stk, stackDataType *elem);
+WORK_RES ResizeDown(stack_t *stk);
 
 WORK_RES GetStackCapacity(size_t *capacity);
 
 WORK_RES StackIsValid(stack_t stk);
 
-WORK_RES StackDump(stack_t *stk);
+WORK_RES StackDump(stack_t *stk, ErrInfo errInfo);
 
-
-
-#endif
+#endif  

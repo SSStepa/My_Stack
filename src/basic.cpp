@@ -34,20 +34,44 @@ WORK_RES ErrorPrintf(const char *errMess, int line, const char *file, WORK_RES E
     fprintf(stderr, CYN "%s, %d:%s %s:%d %s%s\n" COLOR_RESET, file, line, COLOR_RESET, TO_STR(ErrCode), ErrCode, RED, errMess);
     #endif
 
-    fprintf(fileLog, "%s, %d: %s:%d %s\n\n", file, line, TO_STR(ErrCode), ErrCode, errMess);
+    fprintf(fileLog, "%s:%d: %s:%d %s\n", file, line, TO_STR(ErrCode), ErrCode, errMess);
 
     fclose(fileLog);
     return ErrCode;
 }
 
+WORK_RES StartError()
+{
+    FILE *fileLog = fopen(LOG_FILE, "a");
+    if (fileLog == NULL) return $ERR("PROBLEM WITH LOG FILE", FILEERR);
+
+    fwrite("# ", 1, 2, fileLog);
+
+    fclose(fileLog);
+
+    return OK;
+}
+
+WORK_RES EndError()
+{
+    FILE *fileLog = fopen(LOG_FILE, "a");
+    if (fileLog == NULL) return $ERR("PROBLEM WITH LOG FILE", FILEERR);
+
+    fwrite("-------------------------------------------------------------------------------\n\n", 1, 80, fileLog);
+
+    fclose(fileLog);
+
+    return OK;
+}
+
 WORK_RES SetUpLog()
 {
     FILE *fileLog = fopen(LOG_FILE, "a");
-    if (fileLog == NULL) return $err("PROBLEM WITH LOG FILE", FILEERR);
+    if (fileLog == NULL) return $ERR("PROBLEM WITH LOG FILE", FILEERR);
 
     fwrite("-------------------------------------------------------------------------------\n", 1, 80, fileLog);
-    fwrite("                                   NEW TRY                                     \n", 1, 80, fileLog);
-    fwrite("-------------------------------------------------------------------------------\n", 1, 80, fileLog);
+    fwrite("                                 <<NEW RUN>>                                   \n", 1, 80, fileLog);
+    fwrite("-------------------------------------------------------------------------------\n\n", 1, 80, fileLog);
     
     fclose(fileLog);
     return OK;

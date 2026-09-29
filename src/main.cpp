@@ -1,6 +1,13 @@
 #include "../includes/basic.h"
 #include "../includes/stack.h"
 
+void CheckFailBySize(size_t *num) {
+    *num = 4;
+}
+
+// TODO: canary in resize
+// TODO: normal printf for canary
+// TODO: hash
 int main()
 {
     SetUpLog();
@@ -11,43 +18,77 @@ int main()
 
     size_t capacity = 0;
     if ((statusCode = GetStackCapacity(&capacity)) != OK) {
-        return  $err("ERROR WHILE GETTING CAPACITY FROM USER", statusCode);
+        $ERR("ERROR WHILE GETTING CAPACITY FROM USER\n", statusCode);
+        $ERR_END();
+        return statusCode;
     }
 
     if ((statusCode = STACK_CTOR(&stk1, capacity)) != OK) {
-        return  $err("ERROR WHILE CONSTRUCTING STACK", statusCode);
+        $ERR("ERROR WHILE CONSTRUCTING STACK\n", statusCode);
+        $ERR_END();
+        return statusCode;
     }
 
     if ((statusCode = StackPush(&stk1, 'a')) != OK) {
-        return $err("ERROR WHILE TRYING TO PUSH", statusCode);
+        $ERR("ERROR WHILE TRYING TO PUSH\n", statusCode);
+        $ERR_END();
+        return statusCode;
     }
 
     if ((statusCode = StackPush(&stk1, 'b')) != OK) {
-        return $err("ERROR WHILE TRYING TO PUSH", statusCode);
+        $ERR("ERROR WHILE TRYING TO PUSH\n", statusCode);
+        $ERR_END();
+        return statusCode;
     }
 
     if ((statusCode = StackPush(&stk1, 'c')) != OK) {
-        return $err("ERROR WHILE TRYING TO PUSH", statusCode);
+        $ERR("ERROR WHILE TRYING TO PUSH\n", statusCode);
+        $ERR_END();
+        return statusCode;
+    }
+    if ((statusCode = StackPush(&stk1, 'c')) != OK) {
+        $ERR("ERROR WHILE TRYING TO PUSH\n", statusCode);
+        $ERR_END();
+        return statusCode;
+    }
+    if ((statusCode = StackPush(&stk1, 'c')) != OK) {
+        $ERR("ERROR WHILE TRYING TO PUSH\n", statusCode);
+        $ERR_END();
+        return statusCode;
     }
 
-    StackDump(&stk1);
-    
     if ((statusCode = StackPush(&stk1, 's')) != OK) {
-        return $err("ERROR WHILE TRYING TO PUSH", statusCode);
+        $ERR("ERROR WHILE TRYING TO PUSH\n", statusCode);
+        $ERR_END();
+        return statusCode;
     }
-
-    StackDump(&stk1);
 
     stackDataType Elem = 0;
 
     if ((statusCode = StackPop(&stk1, &Elem)) != OK) {
-        return $err("ERROR WHILE TRYING TO POP", statusCode);
+        $ERR("ERROR WHILE TRYING TO POP\n", statusCode);
+        $ERR_END();
+        return statusCode;
     }
 
-    StackDump(&stk1);
-
+    // CheckFailBySize(&(stk1.capacity));
+    *stk1.canaryData = 'L';
+    // stk1.data = 0;
+    if ((statusCode = StackPop(&stk1, &Elem)) != OK) {
+        $ERR("ERROR WHILE TRYING TO POP\n", statusCode);
+        $ERR_END();
+    }
+    
+    if ((statusCode = StackPop(&stk1, &Elem)) != OK) {
+        $ERR("ERROR WHILE TRYING TO POP\n", statusCode);
+        $ERR_END();
+        return statusCode;
+    }
+    
     if ((statusCode = StackDtor(&stk1)) != OK) {
-        return $err("ERROR WHILE DESTRUCTING STACK", statusCode);
+        $ERR("ERROR WHILE DESTRUCTING STACK\n", statusCode);
+        $ERR_END();
+        return statusCode;
     }
     
     return 0;

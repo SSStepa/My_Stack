@@ -20,10 +20,11 @@ enum WORK_RES {
     NOMEM    = 2, // not enough memory
     FILEERR  = 4, // no file to open.
  
-    STACK_DATA      = 11, // wrong data format
-    STACK_CAP       = 12, // zero capacity
-    STACK_OVERFLOW  = 13,  // size > capacity
-    STACK_UNDERFLOW = 14 // size < 0;
+    STACK_DATA       = 11, // wrong data format
+    STACK_CAP        = 12, // zero capacity
+    STACK_OVERFLOW   = 13,  // size > capacity
+    STACK_UNDERFLOW  = 14, // size < 0;
+    STACK_CANARY_RIP = 15
 };
 
 /**
@@ -34,6 +35,14 @@ enum WORK_RES {
 struct String {
     char *str;
     size_t len;
+};
+
+struct ErrInfo {
+    const char *fileCreationName;
+    int   creationLineName;
+    const char *creationFunctionName;
+    WORK_RES err;
+    const char *ErrorText;
 };
 
 /**
@@ -74,12 +83,26 @@ void InfoPrintfLlu      (size_t var, const char *varName, const char *file, int 
 WORK_RES SetUpLog();
 
 WORK_RES ErrorPrintf(const char *errMess, int line, const char *file, WORK_RES ErrCode);
+WORK_RES StartError();
+WORK_RES EndError();
 
 #define $int(Variable) InfoPrintfInt(Variable, TO_STR(Variable), __FILE__, __LINE__)
 #define $str(Variable) InfoPrintfStr(Variable, TO_STR(Variable), __FILE__, __LINE__)
 #define $c(Variable) InfoPrintfC(Variable, TO_STR(Variable), __FILE__, __LINE__)
 #define $dbl(Variable) InfoPrintfDouble(Variable, TO_STR(Variable), __FILE__, __LINE__)
 #define $llu(Variable) InfoPrintfLlu(Variable, TO_STR(Variable), __FILE__, __LINE__)
-#define $err(ErrorMessage, ErrCode) ErrorPrintf(ErrorMessage, __LINE__, __FILE__, ErrCode)
+
+#define $ERR(ErrorMessage, ErrCode) ErrorPrintf(ErrorMessage, __LINE__, __FILE__, ErrCode)
+
+#define $ERR_START() StartError()
+
+#define $ERR_END() EndError()
+
+#define ERR_INIT(errInfo, statusCode, message) \
+    errInfo.fileCreationName = __FILE__; \
+    errInfo.creationLineName = __LINE__; \
+    errInfo.creationFunctionName = __FUNCTION__; \
+    errInfo.err = statusCode; \
+    errInfo.ErrorText = message; 
 
 #endif
