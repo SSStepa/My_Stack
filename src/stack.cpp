@@ -5,12 +5,12 @@ WORK_RES StackCtor(
         ON_DBG(, const char *MyName, const char *fileCreationName, int creationLineName, const  char *creationFunctionName)
 )
 {
-    assert(stk != NULL);
+    MY_ASSERT(stk != NULL);
 
     ON_DBG(
-        assert(fileCreationName);
-        assert(creationFunctionName);
-        assert(MyName);
+        MY_ASSERT(fileCreationName);
+        MY_ASSERT(creationFunctionName);
+        MY_ASSERT(MyName);
     )
 
     if (capacity == 0) {
@@ -47,6 +47,8 @@ WORK_RES StackCtor(
         for (size_t ind = 0; ind < capacity; ind++) {
             (stk -> data)[ind] = STACK_EL_POISON;
         }
+
+        stk -> hashOfData = HASHER(stk -> data, (stk -> capacity) * sizeof(stackDataType));
     )
 
     WORK_RES statusCode = OK;
@@ -63,13 +65,18 @@ WORK_RES StackCtor(
     return OK;
 }
 
-WORK_RES StackPush(stack_t *stk, stackDataType Elem) 
+WORK_RES StackPush(stack_t *stk, stackDataType Elem ON_DBG(, const char *fileCall, int lineCall)) 
 {
-    assert(stk);
+    MY_ASSERT(stk);
 
     WORK_RES statusCode = OK;
 
     if ((statusCode = StackIsValid(*stk)) != OK) {
+        ON_DBG(
+            LOG_START();
+            LOG_PRINTF("Error in push called from %s:%d", fileCall, lineCall);
+            LOG_END();
+        )
         return $ERR("NOT VALID STACK GOT BY FUNCTION", statusCode);
     }
 
@@ -80,11 +87,18 @@ WORK_RES StackPush(stack_t *stk, stackDataType Elem)
 
     (stk -> data)[(stk -> size)++] = Elem;
 
+    ON_DBG(
+        stk -> hashOfData = HASHER(stk -> data, (stk -> capacity) * sizeof(stackDataType));
+    )
+
     if ((statusCode = StackIsValid(*stk)) != OK) {
         ON_DBG(
             ErrInfo errInfo = {};
             ERR_INIT(errInfo, statusCode, "UNVALID STACK WHILE PUSHING");
             StackDump(stk, errInfo);
+            LOG_START();
+            LOG_PRINTF("Error in push called from %s:%d", fileCall, lineCall);
+            LOG_END();
         )
         return $ERR("NOT VALID STACK AFTER PUSH", statusCode);
     }
@@ -94,7 +108,7 @@ WORK_RES StackPush(stack_t *stk, stackDataType Elem)
 
 WORK_RES ResizeUp(stack_t *stk)
 {
-    assert(stk);
+    MY_ASSERT(stk);
     
     stk -> capacity *= 2;
     
@@ -122,19 +136,22 @@ WORK_RES ResizeUp(stack_t *stk)
 
 }
 
-WORK_RES StackPop(stack_t *stk, stackDataType *elem)
+WORK_RES StackPop(stack_t *stk, stackDataType *elem ON_DBG(, const char *fileCall, int lineCall))
 {
-    assert(stk);
-    assert(elem); 
+    MY_ASSERT(stk);
+    MY_ASSERT(elem); 
 
     WORK_RES statusCode = OK;
 
     if ((statusCode = StackIsValid(*stk)) != OK) {
         ON_DBG(
-        ErrInfo errInfo = {};
-        ERR_INIT(errInfo, statusCode, "INCORRECT STACK WHILE TRYING TO POP");
+            LOG_START();
+            LOG_PRINTF("Error in pop called from %s:%d", fileCall, lineCall);
+            LOG_END();
 
-        StackDump(stk, errInfo);
+            ErrInfo errInfo = {};
+            ERR_INIT(errInfo, statusCode, "INCORRECT STACK WHILE TRYING TO POP");
+            StackDump(stk, errInfo);
         )
         return $ERR("NOT VALID STACK GOT BY FUNCTION", statusCode);
     }
@@ -155,12 +172,18 @@ WORK_RES StackPop(stack_t *stk, stackDataType *elem)
     }
 
     *elem = (stk -> data)[--(stk -> size)];
+
     ON_DBG(
-    (stk -> data)[(stk -> size)] = STACK_EL_POISON;
+        (stk -> data)[(stk -> size)] = STACK_EL_POISON;
+        stk -> hashOfData = HASHER(stk -> data, (stk -> capacity) * sizeof(stackDataType));
     )
 
     if ((statusCode = StackIsValid(*stk)) != OK) {
         ON_DBG(
+            LOG_START();
+            LOG_PRINTF("Error in pop called from %s:%d", fileCall, lineCall);
+            LOG_END();
+
             ErrInfo errInfo = {};
             ERR_INIT(errInfo, statusCode, "INCORRECT STACK WHILE TRYING TO POP");
             StackDump(stk, errInfo);
@@ -173,7 +196,7 @@ WORK_RES StackPop(stack_t *stk, stackDataType *elem)
 
 WORK_RES ResizeDown(stack_t *stk)
 {
-    assert(stk);
+    MY_ASSERT(stk);
 
     stk -> capacity = stk -> size;
     
@@ -199,6 +222,8 @@ WORK_RES ResizeDown(stack_t *stk)
 
 WORK_RES StackDtor(stack_t *stk)
 {
+    MY_ASSERT(stk);
+
     WORK_RES statusCode = OK;
     if ((statusCode = StackIsValid(*stk)) != OK) {
         ON_DBG(
@@ -215,6 +240,7 @@ WORK_RES StackDtor(stack_t *stk)
     stk -> size = 0;
     ON_DBG(
         stk -> canaryData = 0;
+        stk -> hashOfData = 0;
     )
 
     return OK;
@@ -222,7 +248,8 @@ WORK_RES StackDtor(stack_t *stk)
 
 WORK_RES GetStackCapacity(size_t *capacity)
 {
-    assert(capacity);
+    MY_ASSERT(capacity);
+
     printf("Hi. What capacity of the stack do you need: ");
 
     if (scanf("%llu", capacity) == 1)
@@ -266,6 +293,10 @@ WORK_RES StackIsValid(stack_t stk)
         $ERR_START();
         return $ERR("RIGHT STRUCT CANARY IS KILLED", STACK_CANARY_RIP);
     }
+    if (stk.hashOfData != HASHER(stk.data, stk.capacity * sizeof(stackDataType))) {
+        $ERR_START();
+        return $ERR("WRONG HASH FOR DATA", STACK_DATA);
+    }
     )
     return OK;
 }
@@ -273,64 +304,64 @@ WORK_RES StackIsValid(stack_t stk)
 WORK_RES StackDump(stack_t *stk, ErrInfo errInfo)
 {
     ON_DBG(
-    assert(stk != NULL);
+    MY_ASSERT(stk != NULL);
 
-    FILE *logFile = fopen(LOG_FILE, "a");
+    LOG_START();
 
-    if (logFile == NULL) {
-        $ERR("CAN'T OPEN LOG FILE", FILEERR);
-    } else {
+    LOG_PRINTF("\nBEGIN OF DUMP\n\n");
+    LOG_PRINTF("%s %s\n", __DATE__, __TIME__);
 
-        fprintf(logFile, "\nBEGIN OF DUMP\n\n");
-        fprintf(logFile, "%s %s\n", __DATE__, __TIME__);
-        fflush(logFile);
+    LOG_PRINTF("Dump was called in %s %s:%d with error code %d because of %s\n", 
+        errInfo.fileCreationName,
+        errInfo.creationFunctionName,
+        errInfo.creationLineName,
+        errInfo.err,
+        errInfo.ErrorText
+    );
 
-        fprintf(logFile, "Dump was called in %s %s:%d with error code %d because of %s\n", 
-            errInfo.fileCreationName,
-            errInfo.creationFunctionName,
-            errInfo.creationLineName,
-            errInfo.err,
-            errInfo.ErrorText
-        );
+    if (errInfo.err == STACK_DATA) {
+        LOG_PRINTF("DUMP CAN'T BE CALLED: ERROR IS STACK_DATA");
+        LOG_PRINTF("%s %s\n", __DATE__, __TIME__);
+        LOG_PRINTF("\nEND OF DUMP\n\n");
 
-        if (errInfo.err == STACK_DATA) return OK;
-
-        fprintf(logFile, "\nHi there! I'm %s[%p] and I was created in %s %s:%d\n", 
-            &(stk -> MyName)[1], // to skip &
-            stk, 
-            stk -> fileCreationName, 
-            stk -> creationFunctionName, 
-            stk -> creationLineName
-        );
-
-        fprintf(logFile, "capacity = <%llu> \nsize = <%llu>\n\n", stk -> capacity, stk -> size);
-        fprintf(logFile, "data is on [%p]\n", stk -> data);
-
-        for (size_t ind = 0; ind < stk -> capacity; ind++) {
-            if (IsZero((stk -> data)[ind] - STACK_EL_POISON) || isnan((stk -> data)[ind])) {
-                fprintf(logFile, "* [%llu]", ind);
-                fprintf(logFile, FILL_FOR_PRINTF, (stk -> data)[ind]);
-                fprintf(logFile, "POISON\n");
-
-            } else {
-                fprintf(logFile, "  [%llu]", ind);
-                fprintf(logFile, FILL_FOR_PRINTF, (stk -> data)[ind]);
-                fprintf(logFile, "\n");
-            }
-        }
-
-        fprintf(logFile, "Expected and got canary: \n");
-        fprintf(logFile, "left in data: " FILL_FOR_PRINTF " and " FILL_FOR_PRINTF "\n", STACK_CANARY_FIRST, *(stk -> canaryData));
-        fprintf(logFile, "right in data: " FILL_FOR_PRINTF " and " FILL_FOR_PRINTF "\n", STACK_CANARY_FIRST, *(stk -> data + stk -> capacity));
-        fprintf(logFile, "left in struct: %llx and %llx\n", STACK_STRUCT_LEFT_CANARY, stk -> leftCanary);
-        fprintf(logFile, "right in struct: %llx and %llx\n", STACK_STRUCT_RIGHT_CANARY, stk -> rightCanary);
-        
-
-        fprintf(logFile, "%s %s\n", __DATE__, __TIME__);
-        fprintf(logFile, "\nEND OF DUMP\n\n");
+        return OK;
     }
 
-    fclose(logFile);
+    LOG_PRINTF("\nHi there! I'm %s[%p] and I was created in %s %s:%d\n", 
+        &(stk -> MyName)[1], // to skip &
+        stk, 
+        stk -> fileCreationName, 
+        stk -> creationFunctionName, 
+        stk -> creationLineName
+    );
+
+    LOG_PRINTF("capacity = <%llu> \nsize = <%llu>\n\n", stk -> capacity, stk -> size);
+    LOG_PRINTF("data is on [%p]\n", stk -> data);
+
+    for (size_t ind = 0; ind < stk -> capacity; ind++) {
+        if (IsZero((stk -> data)[ind] - STACK_EL_POISON) || isnan((stk -> data)[ind])) {
+            LOG_PRINTF("* [%llu] ", ind);
+            LOG_PRINTF(FILL_FOR_PRINTF, (stk -> data)[ind]);
+            LOG_PRINTF("POISON\n");
+
+        } else {
+            LOG_PRINTF("  [%llu]", ind);
+            LOG_PRINTF(FILL_FOR_PRINTF, (stk -> data)[ind]);
+            LOG_PRINTF("\n");
+        }
+    }
+
+    LOG_PRINTF("Expected and got canary: \n");
+    LOG_PRINTF("left in data: " FILL_FOR_PRINTF " and " FILL_FOR_PRINTF "\n", STACK_CANARY_FIRST, *(stk -> canaryData));
+    LOG_PRINTF("right in data: " FILL_FOR_PRINTF " and " FILL_FOR_PRINTF "\n", STACK_CANARY_FIRST, *(stk -> data + stk -> capacity));
+    LOG_PRINTF("left in struct: %llx and %llx\n", STACK_STRUCT_LEFT_CANARY, stk -> leftCanary);
+    LOG_PRINTF("right in struct: %llx and %llx\n", STACK_STRUCT_RIGHT_CANARY, stk -> rightCanary);
+    
+
+    LOG_PRINTF("%s %s\n", __DATE__, __TIME__);
+    LOG_PRINTF("\nEND OF DUMP\n\n");
+    
+    LOG_END();
 
     #ifdef LOUD
 
@@ -362,3 +393,15 @@ WORK_RES StackDump(stack_t *stk, ErrInfo errInfo)
 
     return OK;
 }
+
+unsigned long long djb2(const unsigned char *data, size_t dataLength) 
+{
+    unsigned long long hash = 5381;
+
+    for (size_t ind = 0; ind < dataLength; ind++) {
+        hash = ((hash << 5) + hash) + data[ind];
+    }
+
+    return hash;
+}
+

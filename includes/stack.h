@@ -22,11 +22,16 @@
     ) \
 )
 
+#define STACK_PUSH(stk, elem) StackPush(stk, elem ON_DBG(, __FILE__, __LINE__))
+#define STACK_POP(stk, elem) StackPop(stk, elem ON_DBG(, __FILE__, __LINE__))
+
+#define HASHER(data, dataLength) djb2((const unsigned char *) data, dataLength)
+
 typedef char stackDataType;
 #define FILL_FOR_PRINTF "%c"
 
 ON_DBG(
-const stackDataType STACK_EL_POISON = 0;
+const stackDataType STACK_EL_POISON = '$';
 const stackDataType STACK_CANARY_FIRST = 'S';
 const stackDataType STACK_CANARY_SECOND = 'U';
 const int BUFF_DUMP_SIZE = 100;
@@ -50,6 +55,7 @@ struct stack_t {
     int   creationLineName;
     const char *creationFunctionName;
     stackDataType *canaryData;
+    unsigned long long hashOfData;
     )
 
     ON_DBG(unsigned long long rightCanary;)
@@ -61,10 +67,10 @@ WORK_RES StackCtor(
     );
 WORK_RES StackDtor(stack_t *stk);
 
-WORK_RES StackPush(stack_t *stk, stackDataType Elem);
+WORK_RES StackPush(stack_t *stk, stackDataType Elem ON_DBG(, const char *fileCall, int lineCall));
 WORK_RES ResizeUp(stack_t *stk);
 
-WORK_RES StackPop(stack_t *stk, stackDataType *elem);
+WORK_RES StackPop(stack_t *stk, stackDataType *elem ON_DBG(, const char *fileCall, int lineCall));
 WORK_RES ResizeDown(stack_t *stk);
 
 WORK_RES GetStackCapacity(size_t *capacity);
@@ -72,5 +78,7 @@ WORK_RES GetStackCapacity(size_t *capacity);
 WORK_RES StackIsValid(stack_t stk);
 
 WORK_RES StackDump(stack_t *stk, ErrInfo errInfo);
+
+unsigned long long djb2(const unsigned char *data, size_t dataLength);
 
 #endif  

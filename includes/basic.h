@@ -105,4 +105,23 @@ WORK_RES EndError();
     errInfo.err = statusCode; \
     errInfo.ErrorText = message; 
 
+#define LOG_START() \
+    FILE *logFile = fopen(LOG_FILE, "a");
+
+#define LOG_END() \
+    fclose(logFile);
+
+#define LOG_PRINTF(...) \
+    fprintf(logFile, __VA_ARGS__); \
+    fflush(logFile);
+
+#ifdef DEBUGGER
+#define MY_ASSERT(...) \
+    if (!(__VA_ARGS__)) \
+        return $ERR("MY ASSERTION FAILED: WRONG INPUT TO FUNCTION", WRIN); 
+#else
+#define MY_ASSERT(...) 
+#endif
+
+
 #endif

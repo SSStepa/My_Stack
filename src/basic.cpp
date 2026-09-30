@@ -28,15 +28,16 @@ void InfoPrintfDouble(double var, const char *varName, const char *file, int lin
 
 WORK_RES ErrorPrintf(const char *errMess, int line, const char *file, WORK_RES ErrCode)
 {
-    FILE *fileLog = fopen(LOG_FILE, "a");
+    LOG_START();
 
     #ifdef LOUD
     fprintf(stderr, CYN "%s, %d:%s %s:%d %s%s\n" COLOR_RESET, file, line, COLOR_RESET, TO_STR(ErrCode), ErrCode, RED, errMess);
     #endif
 
-    fprintf(fileLog, "%s:%d: %s:%d %s\n", file, line, TO_STR(ErrCode), ErrCode, errMess);
+    LOG_PRINTF("%s:%d: %s:%d %s\n", file, line, TO_STR(ErrCode), ErrCode, errMess);
 
-    fclose(fileLog);
+    LOG_END();
+    
     return ErrCode;
 }
 
