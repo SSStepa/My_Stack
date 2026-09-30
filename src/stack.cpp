@@ -2,12 +2,12 @@
 
 WORK_RES StackCtor(
         stack_t *stk, size_t capacity 
-        DEBUGGER(, const char *MyName, const char *fileCreationName, int creationLineName, const  char *creationFunctionName)
+        ON_DBG(, const char *MyName, const char *fileCreationName, int creationLineName, const  char *creationFunctionName)
 )
 {
     assert(stk != NULL);
 
-    DEBUGGER(
+    ON_DBG(
         assert(fileCreationName);
         assert(creationFunctionName);
         assert(MyName);
@@ -24,17 +24,20 @@ WORK_RES StackCtor(
     }
 
     stk -> capacity = capacity;
-    stk -> data = (stackDataType *) calloc(capacity DEBUGGER(+2), sizeof(stackDataType));
+    stk -> data = (stackDataType *) calloc(capacity ON_DBG(+2), sizeof(stackDataType));
     if (stk -> data == NULL) {
         $ERR_START();
         return $ERR("NOT ENOUGH MEMORY TO CREATE STACK", NOMEM);
     }
 
-    DEBUGGER(
+    ON_DBG(
         stk -> canaryData = stk -> data;
         stk -> data++;
         *(stk -> canaryData) = STACK_CANARY_FIRST;
         *(stk -> data + stk -> capacity) = STACK_CANARY_SECOND;
+
+        stk -> leftCanary = STACK_STRUCT_LEFT_CANARY;
+        stk -> rightCanary = STACK_STRUCT_RIGHT_CANARY;
 
         stk -> MyName = MyName;
         stk -> fileCreationName = fileCreationName;
@@ -48,7 +51,7 @@ WORK_RES StackCtor(
 
     WORK_RES statusCode = OK;
     if ((statusCode = StackIsValid(*stk)) != OK) {
-        DEBUGGER(
+        ON_DBG(
             ErrInfo errInfo = {};
             ERR_INIT(errInfo, statusCode, "INCORRECT STACK AFTER CREATION");
             StackDump(stk, errInfo);
@@ -78,7 +81,7 @@ WORK_RES StackPush(stack_t *stk, stackDataType Elem)
     (stk -> data)[(stk -> size)++] = Elem;
 
     if ((statusCode = StackIsValid(*stk)) != OK) {
-        DEBUGGER(
+        ON_DBG(
             ErrInfo errInfo = {};
             ERR_INIT(errInfo, statusCode, "UNVALID STACK WHILE PUSHING");
             StackDump(stk, errInfo);
@@ -95,9 +98,9 @@ WORK_RES ResizeUp(stack_t *stk)
     
     stk -> capacity *= 2;
     
-    stackDataType *temp = (stackDataType *) realloc(DEBUGGER(--)(stk -> data), (stk -> capacity DEBUGGER(+2))*sizeof(stackDataType));
+    stackDataType *temp = (stackDataType *) realloc(ON_DBG(--)(stk -> data), (stk -> capacity ON_DBG(+2))*sizeof(stackDataType));
     if (temp == NULL) {
-        DEBUGGER(
+        ON_DBG(
             ErrInfo errInfo = {};
             ERR_INIT(errInfo, NOMEM, "NOT ENOUGH MEMORY");
             StackDump(stk, errInfo);
@@ -106,7 +109,7 @@ WORK_RES ResizeUp(stack_t *stk)
     }
     stk -> data = temp;
 
-    DEBUGGER(
+    ON_DBG(
         stk -> canaryData = (stk -> data)++;
         *(stk -> canaryData) = STACK_CANARY_FIRST;
         *(stk -> data + stk -> capacity) = STACK_CANARY_SECOND;
@@ -122,11 +125,12 @@ WORK_RES ResizeUp(stack_t *stk)
 WORK_RES StackPop(stack_t *stk, stackDataType *elem)
 {
     assert(stk);
+    assert(elem); 
 
     WORK_RES statusCode = OK;
 
     if ((statusCode = StackIsValid(*stk)) != OK) {
-        DEBUGGER(
+        ON_DBG(
         ErrInfo errInfo = {};
         ERR_INIT(errInfo, statusCode, "INCORRECT STACK WHILE TRYING TO POP");
 
@@ -136,7 +140,7 @@ WORK_RES StackPop(stack_t *stk, stackDataType *elem)
     }
     
     if (stk -> size == 0) {
-        DEBUGGER(
+        ON_DBG(
             ErrInfo errInfo = {};
             ERR_INIT(errInfo, STACK_UNDERFLOW, "POP FROM STACK WITH 0 SIZE");
             StackDump(stk, errInfo);
@@ -151,12 +155,12 @@ WORK_RES StackPop(stack_t *stk, stackDataType *elem)
     }
 
     *elem = (stk -> data)[--(stk -> size)];
-    DEBUGGER(
+    ON_DBG(
     (stk -> data)[(stk -> size)] = STACK_EL_POISON;
     )
 
     if ((statusCode = StackIsValid(*stk)) != OK) {
-        DEBUGGER(
+        ON_DBG(
             ErrInfo errInfo = {};
             ERR_INIT(errInfo, statusCode, "INCORRECT STACK WHILE TRYING TO POP");
             StackDump(stk, errInfo);
@@ -173,9 +177,9 @@ WORK_RES ResizeDown(stack_t *stk)
 
     stk -> capacity = stk -> size;
     
-    stackDataType *temp = (stackDataType *) realloc(DEBUGGER(--)(stk -> data), (stk -> capacity DEBUGGER(+2))*sizeof(stackDataType));
+    stackDataType *temp = (stackDataType *) realloc(ON_DBG(--)(stk -> data), (stk -> capacity ON_DBG(+2))*sizeof(stackDataType));
     if (temp == NULL) {
-        DEBUGGER(
+        ON_DBG(
             ErrInfo errInfo = {};
             ERR_INIT(errInfo, NOMEM, "PROBLEM WHILE TRYING TO REALLOC TO SMALLER SIZE");
             StackDump(stk, errInfo);
@@ -184,7 +188,7 @@ WORK_RES ResizeDown(stack_t *stk)
     }
     stk -> data = temp;
 
-    DEBUGGER(
+    ON_DBG(
         stk -> canaryData = (stk -> data)++;
         *(stk -> canaryData) = STACK_CANARY_FIRST;
         *(stk -> data + stk -> capacity) = STACK_CANARY_SECOND;
@@ -197,7 +201,7 @@ WORK_RES StackDtor(stack_t *stk)
 {
     WORK_RES statusCode = OK;
     if ((statusCode = StackIsValid(*stk)) != OK) {
-        DEBUGGER(
+        ON_DBG(
            ErrInfo errInfo = {};
             ERR_INIT(errInfo, WRIN, "INCORRECT STACK TO DELETE");
             StackDump(stk, errInfo);
@@ -205,11 +209,11 @@ WORK_RES StackDtor(stack_t *stk)
         return $ERR("WRONG DATA IN STACK", statusCode);
     }
 
-    free(DEBUGGER(--)(stk -> data));
+    free(ON_DBG(--)(stk -> data));
     stk -> data = 0;
     stk -> capacity = 0;
     stk -> size = 0;
-    DEBUGGER(
+    ON_DBG(
         stk -> canaryData = 0;
     )
 
@@ -245,14 +249,22 @@ WORK_RES StackIsValid(stack_t stk)
         return $ERR("STACK SIZE OF BIGGER THAN CAPACITY", STACK_OVERFLOW);
     }
 
-    DEBUGGER(
+    ON_DBG(
     if (*stk.canaryData != STACK_CANARY_FIRST) {
         $ERR_START();
-        return $ERR("FIRST CANARY IS KILLED", STACK_CANARY_RIP);
+        return $ERR("LEFT CANARY IN DATA IS KILLED", STACK_CANARY_RIP);
     }
     if (*(stk.data + stk.capacity) != STACK_CANARY_SECOND) {
         $ERR_START();
-        return $ERR("SECOND CANARY IS KILLED", STACK_CANARY_RIP);
+        return $ERR("RIGHT CANARY IN DATA IS KILLED", STACK_CANARY_RIP);
+    }
+    if (stk.leftCanary != STACK_STRUCT_LEFT_CANARY) {
+        $ERR_START();
+        return $ERR("LEFT STRUCT CANARY IS KILLED", STACK_CANARY_RIP);
+    }
+    if (stk.rightCanary != STACK_STRUCT_RIGHT_CANARY) {
+        $ERR_START();
+        return $ERR("RIGHT STRUCT CANARY IS KILLED", STACK_CANARY_RIP);
     }
     )
     return OK;
@@ -260,7 +272,7 @@ WORK_RES StackIsValid(stack_t stk)
 
 WORK_RES StackDump(stack_t *stk, ErrInfo errInfo)
 {
-    DEBUGGER(
+    ON_DBG(
     assert(stk != NULL);
 
     FILE *logFile = fopen(LOG_FILE, "a");
@@ -307,12 +319,12 @@ WORK_RES StackDump(stack_t *stk, ErrInfo errInfo)
             }
         }
 
-        if (errInfo.err == STACK_CANARY_RIP) {
-            fprintf(logFile, "Expected canary is: ");
-            fprintf(logFile, FILL_FOR_PRINTF " and " FILL_FOR_PRINTF, STACK_CANARY_FIRST, STACK_CANARY_SECOND);
-            fprintf(logFile, "\nAnd got: ");
-            fprintf(logFile, FILL_FOR_PRINTF " and " FILL_FOR_PRINTF "\n", *(stk -> canaryData), *(stk -> data + stk -> capacity));
-        }
+        fprintf(logFile, "Expected and got canary: \n");
+        fprintf(logFile, "left in data: " FILL_FOR_PRINTF " and " FILL_FOR_PRINTF "\n", STACK_CANARY_FIRST, *(stk -> canaryData));
+        fprintf(logFile, "right in data: " FILL_FOR_PRINTF " and " FILL_FOR_PRINTF "\n", STACK_CANARY_FIRST, *(stk -> data + stk -> capacity));
+        fprintf(logFile, "left in struct: %llx and %llx\n", STACK_STRUCT_LEFT_CANARY, stk -> leftCanary);
+        fprintf(logFile, "right in struct: %llx and %llx\n", STACK_STRUCT_RIGHT_CANARY, stk -> rightCanary);
+        
 
         fprintf(logFile, "%s %s\n", __DATE__, __TIME__);
         fprintf(logFile, "\nEND OF DUMP\n\n");

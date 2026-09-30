@@ -8,6 +8,7 @@ void CheckFailBySize(size_t *num) {
 // TODO: canary in resize
 // TODO: normal printf for canary
 // TODO: hash
+// TODO: push pop on dbg get line and info
 int main()
 {
     SetUpLog();
@@ -72,7 +73,8 @@ int main()
     }
 
     // CheckFailBySize(&(stk1.capacity));
-    *stk1.canaryData = 'L';
+    // *stk1.canaryData = 'L';
+    *(int *) &stk1 = 0;
     // stk1.data = 0;
     if ((statusCode = StackPop(&stk1, &Elem)) != OK) {
         $ERR("ERROR WHILE TRYING TO POP\n", statusCode);
