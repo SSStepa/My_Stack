@@ -73,7 +73,7 @@ bool IsZero(double x);
 
 #define TO_STR(str) #str
 
-const char * const LOG_FILE = "logfile.log";
+const char * const LOG_FILE = "main.log";
 
 void InfoPrintfInt      (int var, const char *varName, const char *file, int line);
 void InfoPrintfStr      (const char *var, const char *varName, const char *file, int line);

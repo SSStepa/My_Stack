@@ -358,8 +358,8 @@ WORK_RES StackDump(stack_t *stk, ErrInfo errInfo)
     LOG_PRINTF("right in struct: %llx and %llx\n", STACK_STRUCT_RIGHT_CANARY, stk -> rightCanary);
     
 
-    LOG_PRINTF("%s %s\n", __DATE__, __TIME__);
-    LOG_PRINTF("\nEND OF DUMP\n\n");
+    LOG_PRINTF("\n%s %s\n", __DATE__, __TIME__);
+    LOG_PRINTF("END OF DUMP\n\n");
     
     LOG_END();
 

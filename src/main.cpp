@@ -75,7 +75,7 @@ int main()
     // *stk1.canaryData = 'L';
     // *(int *) &stk1 = 0;
     // stk1.data = 0;
-    stk1.data[3] = 'u';
+    // stk1.data[3] = 'u';
     if ((statusCode = STACK_POP(&stk1, &Elem)) != OK) {
         $ERR("ERROR WHILE TRYING TO POP\n", statusCode);
         $ERR_END();
