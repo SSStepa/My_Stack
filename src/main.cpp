@@ -5,7 +5,6 @@ void CheckFailBySize(size_t *num) {
     *num = 4;
 }
 
-// TODO: hash
 // TODO: ull canaries
 int main()
 {

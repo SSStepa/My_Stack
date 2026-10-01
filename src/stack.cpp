@@ -155,15 +155,6 @@ WORK_RES StackPop(stack_t *stk, stackDataType *elem ON_DBG(, const char *fileCal
         )
         return $ERR("NOT VALID STACK GOT BY FUNCTION", statusCode);
     }
-    
-    if (stk -> size == 0) {
-        ON_DBG(
-            ErrInfo errInfo = {};
-            ERR_INIT(errInfo, STACK_UNDERFLOW, "POP FROM STACK WITH 0 SIZE");
-            StackDump(stk, errInfo);
-        )
-        return $ERR("CAN'T GET ELEMENT FROM STACK WITHOUT ELEMENTS", STACK_UNDERFLOW);
-    }
 
     if ((stk ->capacity)/4 > stk -> size) {
         if ((statusCode = ResizeDown(stk)) != OK) {
@@ -271,7 +262,7 @@ WORK_RES StackIsValid(stack_t stk)
         return $ERR("STACK CAPACITY IS 0", STACK_CAP);
     }
 
-    if (stk.size > stk.capacity) {
+    if (stk.size >= stk.capacity) {
         $ERR_START();
         return $ERR("STACK SIZE OF BIGGER THAN CAPACITY", STACK_OVERFLOW);
     }
