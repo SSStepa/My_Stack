@@ -48,7 +48,8 @@ WORK_RES StackCtor(
             (stk -> data)[ind] = STACK_EL_POISON;
         }
 
-        stk -> hashOfData = HASHER(stk -> data, (stk -> capacity) * sizeof(stackDataType));
+        stk -> hashOfData   = HASHER(stk -> data, (stk -> capacity) * sizeof(stackDataType));
+        stk -> hashOfStruct = HASHER(stk, sizeof(stack_t));
     )
 
     WORK_RES statusCode = OK;
@@ -89,6 +90,8 @@ WORK_RES StackPush(stack_t *stk, stackDataType Elem ON_DBG(, const char *fileCal
 
     ON_DBG(
         stk -> hashOfData = HASHER(stk -> data, (stk -> capacity) * sizeof(stackDataType));
+        stk -> hashOfStruct = 0;
+        stk -> hashOfStruct = HASHER(stk, sizeof(stack_t));
     )
 
     if ((statusCode = StackIsValid(*stk)) != OK) {
@@ -167,6 +170,8 @@ WORK_RES StackPop(stack_t *stk, stackDataType *elem ON_DBG(, const char *fileCal
     ON_DBG(
         (stk -> data)[(stk -> size)] = STACK_EL_POISON;
         stk -> hashOfData = HASHER(stk -> data, (stk -> capacity) * sizeof(stackDataType));
+        stk -> hashOfStruct = 0;
+        stk -> hashOfStruct = HASHER(stk, sizeof(stack_t));
     )
 
     if ((statusCode = StackIsValid(*stk)) != OK) {
@@ -232,6 +237,7 @@ WORK_RES StackDtor(stack_t *stk)
     ON_DBG(
         stk -> canaryData = 0;
         stk -> hashOfData = 0;
+        stk -> hashOfStruct = 0;
     )
 
     return OK;
@@ -252,17 +258,12 @@ WORK_RES GetStackCapacity(size_t *capacity)
 
 WORK_RES StackIsValid(stack_t stk)
 {
-    if (stk.data == 0) {
-        $ERR_START();
-        return $ERR("STACK DATA PTR IS 0", STACK_DATA);
-    }
-
     if (stk.capacity == 0) {
         $ERR_START();
         return $ERR("STACK CAPACITY IS 0", STACK_CAP);
     }
 
-    if (stk.size >= stk.capacity) {
+    if (stk.size > stk.capacity) {
         $ERR_START();
         return $ERR("STACK SIZE OF BIGGER THAN CAPACITY", STACK_OVERFLOW);
     }
@@ -272,21 +273,28 @@ WORK_RES StackIsValid(stack_t stk)
         $ERR_START();
         return $ERR("LEFT CANARY IN DATA IS KILLED", STACK_CANARY_RIP);
     }
-    if (*(stk.data + stk.capacity) != STACK_CANARY_SECOND) {
+    if (*(stk.data - 1) != STACK_CANARY_FIRST) {
         $ERR_START();
         return $ERR("RIGHT CANARY IN DATA IS KILLED", STACK_CANARY_RIP);
     }
-    if (stk.leftCanary != STACK_STRUCT_LEFT_CANARY) {
+    if (STACK_STRUCT_LEFT_CANARY != STACK_STRUCT_LEFT_CANARY) {
         $ERR_START();
         return $ERR("LEFT STRUCT CANARY IS KILLED", STACK_CANARY_RIP);
     }
-    if (stk.rightCanary != STACK_STRUCT_RIGHT_CANARY) {
+    if (STACK_STRUCT_RIGHT_CANARY != STACK_STRUCT_RIGHT_CANARY) {
         $ERR_START();
         return $ERR("RIGHT STRUCT CANARY IS KILLED", STACK_CANARY_RIP);
     }
     if (stk.hashOfData != HASHER(stk.data, stk.capacity * sizeof(stackDataType))) {
         $ERR_START();
         return $ERR("WRONG HASH FOR DATA", STACK_DATA);
+    }
+
+    unsigned long long hashOfStruct = stk.hashOfStruct;
+    stk.hashOfStruct = 0;
+    if (HASHER((&stk), sizeof(stack_t)) != hashOfStruct) {
+        $ERR_START();
+        return $ERR("WRONG HASH FOR STRUCT", STACK_STRUCT);
     }
     )
     return OK;
@@ -332,22 +340,29 @@ WORK_RES StackDump(stack_t *stk, ErrInfo errInfo)
     for (size_t ind = 0; ind < stk -> capacity; ind++) {
         if (IsZero((stk -> data)[ind] - STACK_EL_POISON) || isnan((stk -> data)[ind])) {
             LOG_PRINTF("* [%llu] ", ind);
-            LOG_PRINTF(FILL_FOR_PRINTF, (stk -> data)[ind]);
+            LOG_PRINTF("<" FILL_FOR_PRINTF ">", (stk -> data)[ind]);
+            if (strcmp(FILL_FOR_PRINTF, "%c") == 0)
+                LOG_PRINTF(" (%d) ", (stk -> data)[ind]);
             LOG_PRINTF("POISON\n");
 
         } else {
             LOG_PRINTF("  [%llu]", ind);
-            LOG_PRINTF(FILL_FOR_PRINTF, (stk -> data)[ind]);
+            LOG_PRINTF("<" FILL_FOR_PRINTF ">", (stk -> data)[ind]);
+            if (strcmp(FILL_FOR_PRINTF, "%c") == 0)
+                LOG_PRINTF(" (%d)", (stk -> data)[ind]);
             LOG_PRINTF("\n");
         }
     }
 
     LOG_PRINTF("Expected and got canary: \n");
-    LOG_PRINTF("left in data: " FILL_FOR_PRINTF " and " FILL_FOR_PRINTF "\n", STACK_CANARY_FIRST, *(stk -> canaryData));
-    LOG_PRINTF("right in data: " FILL_FOR_PRINTF " and " FILL_FOR_PRINTF "\n", STACK_CANARY_FIRST, *(stk -> data + stk -> capacity));
-    LOG_PRINTF("left in struct: %llx and %llx\n", STACK_STRUCT_LEFT_CANARY, stk -> leftCanary);
-    LOG_PRINTF("right in struct: %llx and %llx\n", STACK_STRUCT_RIGHT_CANARY, stk -> rightCanary);
+    LOG_PRINTF("left in data: <" FILL_FOR_PRINTF "> and <" FILL_FOR_PRINTF ">\n", STACK_CANARY_FIRST, *(stk -> canaryData));
+    LOG_PRINTF("right in data: <" FILL_FOR_PRINTF "> and <" FILL_FOR_PRINTF ">\n", STACK_CANARY_FIRST, *(stk -> data + stk -> capacity));
+    LOG_PRINTF("left in struct: <0x%llx> and <0x%llx>\n", STACK_STRUCT_LEFT_CANARY, stk -> leftCanary);
+    LOG_PRINTF("right in struct: <0x%llx> and <0x%llx>\n", STACK_STRUCT_RIGHT_CANARY, stk -> rightCanary);
     
+    LOG_PRINTF("\nHash of :\n")
+    LOG_PRINTF("- DATA:   <0x%llx>\n", stk -> hashOfData);
+    LOG_PRINTF("- STRUCT: <0x%llx>\n", stk -> hashOfStruct);
 
     LOG_PRINTF("\n%s %s\n", __DATE__, __TIME__);
     LOG_PRINTF("END OF DUMP\n\n");

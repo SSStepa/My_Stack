@@ -20,6 +20,7 @@ enum WORK_RES {
     NOMEM    = 2, // not enough memory
     FILEERR  = 4, // no file to open.
  
+    STACK_STRUCT     = 10, // problem with struct
     STACK_DATA       = 11, // wrong data format
     STACK_CAP        = 12, // zero capacity
     STACK_OVERFLOW   = 13,  // size > capacity
@@ -81,6 +82,7 @@ void InfoPrintfC        (char var, const char *varName, const char *file, int li
 void InfoPrintfDouble   (double var, const char *varName, const char *file, int line);
 void InfoPrintfLlu      (size_t var, const char *varName, const char *file, int line);
 WORK_RES SetUpLog();
+WORK_RES EndLog();
 
 WORK_RES ErrorPrintf(const char *errMess, int line, const char *file, WORK_RES ErrCode);
 WORK_RES StartError();

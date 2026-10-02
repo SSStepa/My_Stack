@@ -1,11 +1,5 @@
 #include "../includes/basic.h"
 #include "../includes/stack.h"
-
-void CheckFailBySize(size_t *num) {
-    *num = 4;
-}
-
-// TODO: ull canaries
 int main()
 {
     SetUpLog();
@@ -27,7 +21,7 @@ int main()
         return statusCode;
     }
 
-    if ((statusCode = STACK_PUSH(&stk1, 'a')) != OK) {
+    if ((statusCode = STACK_PUSH(&stk1, 32)) != OK) {
         $ERR("ERROR WHILE TRYING TO PUSH\n", statusCode);
         $ERR_END();
         return statusCode;
@@ -70,11 +64,7 @@ int main()
     }
 //------------------------------------------------------------------------------------------------
 
-    // CheckFailBySize(&(stk1.capacity));
-    // *stk1.canaryData = 'L';
-    // *(int *) &stk1 = 0;
-    // stk1.data = 0;
-    // stk1.data[3] = 'u';
+    stk1.capacity = 10000;
     if ((statusCode = STACK_POP(&stk1, &Elem)) != OK) {
         $ERR("ERROR WHILE TRYING TO POP\n", statusCode);
         $ERR_END();
@@ -92,6 +82,8 @@ int main()
         $ERR_END();
         return statusCode;
     }
+    
+    EndLog();
     
     return 0;
 }

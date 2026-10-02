@@ -37,7 +37,7 @@ WORK_RES ErrorPrintf(const char *errMess, int line, const char *file, WORK_RES E
     LOG_PRINTF("%s:%d: %s:%d %s\n", file, line, TO_STR(ErrCode), ErrCode, errMess);
 
     LOG_END();
-    
+
     return ErrCode;
 }
 
@@ -76,6 +76,17 @@ WORK_RES SetUpLog()
     
     fclose(fileLog);
     return OK;
+}
+
+WORK_RES EndLog()
+{
+    FILE *fileLog = fopen(LOG_FILE, "a");
+
+    fwrite("PROGRAM ENDED WITH ALL GOOD", 1, 28, fileLog);
+
+    fclose(fileLog);
+    return OK;
+
 }
 
 bool IsZero(double x)

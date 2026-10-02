@@ -56,6 +56,7 @@ struct stack_t {
     const char *creationFunctionName;
     stackDataType *canaryData;
     unsigned long long hashOfData;
+    unsigned long long hashOfStruct;
     )
 
     ON_DBG(unsigned long long rightCanary;)
