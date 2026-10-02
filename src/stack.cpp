@@ -158,6 +158,15 @@ WORK_RES StackPop(stack_t *stk, stackDataType *elem ON_DBG(, const char *fileCal
         )
         return $ERR("NOT VALID STACK GOT BY FUNCTION", statusCode);
     }
+    
+    if (stk -> size == 0) {
+        ON_DBG(
+            ErrInfo errInfo = {};
+            ERR_INIT(errInfo, STACK_UNDERFLOW, "POP FROM STACK WITH 0 SIZE");
+            StackDump(stk, errInfo);
+        )
+        return $ERR("CAN'T GET ELEMENT FROM STACK WITHOUT ELEMENTS", STACK_UNDERFLOW);
+    }
 
     if ((stk ->capacity)/4 > stk -> size) {
         if ((statusCode = ResizeDown(stk)) != OK) {
@@ -258,6 +267,11 @@ WORK_RES GetStackCapacity(size_t *capacity)
 
 WORK_RES StackIsValid(stack_t stk)
 {
+    if (stk.data == 0) {
+        $ERR_START();
+        return $ERR("STACK DATA PTR IS 0", STACK_DATA);
+    }
+
     if (stk.capacity == 0) {
         $ERR_START();
         return $ERR("STACK CAPACITY IS 0", STACK_CAP);
@@ -273,26 +287,26 @@ WORK_RES StackIsValid(stack_t stk)
         $ERR_START();
         return $ERR("LEFT CANARY IN DATA IS KILLED", STACK_CANARY_RIP);
     }
-    if (*(stk.data - 1) != STACK_CANARY_FIRST) {
+    if (*(stk.data + stk.capacity) != STACK_CANARY_SECOND) {
         $ERR_START();
         return $ERR("RIGHT CANARY IN DATA IS KILLED", STACK_CANARY_RIP);
     }
-    if (STACK_STRUCT_LEFT_CANARY != STACK_STRUCT_LEFT_CANARY) {
+    if (stk.leftCanary != STACK_STRUCT_LEFT_CANARY) {
         $ERR_START();
         return $ERR("LEFT STRUCT CANARY IS KILLED", STACK_CANARY_RIP);
     }
-    if (STACK_STRUCT_RIGHT_CANARY != STACK_STRUCT_RIGHT_CANARY) {
+    if (stk.rightCanary != STACK_STRUCT_RIGHT_CANARY) {
         $ERR_START();
         return $ERR("RIGHT STRUCT CANARY IS KILLED", STACK_CANARY_RIP);
     }
-    if (stk.hashOfData == 0) {
+    if (stk.hashOfData != HASHER(stk.data, stk.capacity * sizeof(stackDataType))) {
         $ERR_START();
         return $ERR("WRONG HASH FOR DATA", STACK_DATA);
     }
 
     unsigned long long hashOfStruct = stk.hashOfStruct;
     stk.hashOfStruct = 0;
-    if (HASHER((&stk), sizeof(stack_t)) == stk.hashOfStruct) {
+    if (HASHER((&stk), sizeof(stack_t)) != hashOfStruct) {
         $ERR_START();
         return $ERR("WRONG HASH FOR STRUCT", STACK_STRUCT);
     }

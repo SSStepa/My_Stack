@@ -25,7 +25,7 @@ enum WORK_RES {
     STACK_CAP        = 12, // zero capacity
     STACK_OVERFLOW   = 13,  // size > capacity
     STACK_UNDERFLOW  = 14, // size < 0;
-    STACK_CANARY_RIP = 15
+    STACK_CANARY_RIP = 15 // rip of stack canary;
 };
 
 /**

@@ -69,7 +69,7 @@ int main()
         $ERR_END();
         return statusCode;
     }
-    
+   stk1.size--; 
     
     if ((statusCode = STACK_POP(&stk1, &Elem)) != OK) {
         $ERR("ERROR WHILE TRYING TO POP\n", statusCode);
