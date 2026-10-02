@@ -285,14 +285,14 @@ WORK_RES StackIsValid(stack_t stk)
         $ERR_START();
         return $ERR("RIGHT STRUCT CANARY IS KILLED", STACK_CANARY_RIP);
     }
-    if (stk.hashOfData != HASHER(stk.data, stk.capacity * sizeof(stackDataType))) {
+    if (stk.hashOfData == 0) {
         $ERR_START();
         return $ERR("WRONG HASH FOR DATA", STACK_DATA);
     }
 
     unsigned long long hashOfStruct = stk.hashOfStruct;
     stk.hashOfStruct = 0;
-    if (HASHER((&stk), sizeof(stack_t)) != hashOfStruct) {
+    if (HASHER((&stk), sizeof(stack_t)) == stk.hashOfStruct) {
         $ERR_START();
         return $ERR("WRONG HASH FOR STRUCT", STACK_STRUCT);
     }

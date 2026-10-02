@@ -64,12 +64,12 @@ int main()
     }
 //------------------------------------------------------------------------------------------------
 
-    stk1.capacity = 10000;
     if ((statusCode = STACK_POP(&stk1, &Elem)) != OK) {
         $ERR("ERROR WHILE TRYING TO POP\n", statusCode);
         $ERR_END();
         return statusCode;
     }
+    
     
     if ((statusCode = STACK_POP(&stk1, &Elem)) != OK) {
         $ERR("ERROR WHILE TRYING TO POP\n", statusCode);

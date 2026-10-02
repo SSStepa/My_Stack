@@ -82,4 +82,4 @@ WORK_RES StackDump(stack_t *stk, ErrInfo errInfo);
 
 unsigned long long djb2(const unsigned char *data, size_t dataLength);
 
-#endif  
+#endif
