@@ -1,5 +1,9 @@
 #include "../includes/basic.h"
 #include "../includes/stack.h"
+void Break(stack_t *stk) {
+    stk->size++;
+}
+
 int main()
 {
     SetUpLog();
@@ -69,8 +73,9 @@ int main()
         $ERR_END();
         return statusCode;
     }
-   stk1.size--; 
-    
+
+    Break(&stk1);
+
     if ((statusCode = STACK_POP(&stk1, &Elem)) != OK) {
         $ERR("ERROR WHILE TRYING TO POP\n", statusCode);
         $ERR_END();

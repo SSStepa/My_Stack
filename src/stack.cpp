@@ -24,13 +24,13 @@ WORK_RES StackCtor(
     }
 
     stk -> capacity = capacity;
-    stk -> data = (stackDataType *) calloc(capacity ON_DBG(+2), sizeof(stackDataType));
+    stk -> data = (stackDataType *) calloc(capacity ON_CANARY(+2), sizeof(stackDataType));
     if (stk -> data == NULL) {
         $ERR_START();
         return $ERR("NOT ENOUGH MEMORY TO CREATE STACK", NOMEM);
     }
 
-    ON_DBG(
+    ON_CANARY(
         stk -> canaryData = stk -> data;
         stk -> data++;
         *(stk -> canaryData) = STACK_CANARY_FIRST;
@@ -38,7 +38,8 @@ WORK_RES StackCtor(
 
         stk -> leftCanary = STACK_STRUCT_LEFT_CANARY;
         stk -> rightCanary = STACK_STRUCT_RIGHT_CANARY;
-
+    )
+    ON_DBG(
         stk -> MyName = MyName;
         stk -> fileCreationName = fileCreationName;
         stk -> creationLineName = creationLineName;
@@ -47,6 +48,8 @@ WORK_RES StackCtor(
         for (size_t ind = 0; ind < capacity; ind++) {
             (stk -> data)[ind] = STACK_EL_POISON;
         }
+    )
+    ON_HASH(
 
         stk -> hashOfData   = HASHER(stk -> data, (stk -> capacity) * sizeof(stackDataType));
         stk -> hashOfStruct = HASHER(stk, sizeof(stack_t));
@@ -88,7 +91,7 @@ WORK_RES StackPush(stack_t *stk, stackDataType Elem ON_DBG(, const char *fileCal
 
     (stk -> data)[(stk -> size)++] = Elem;
 
-    ON_DBG(
+    ON_HASH(
         stk -> hashOfData = HASHER(stk -> data, (stk -> capacity) * sizeof(stackDataType));
         stk -> hashOfStruct = 0;
         stk -> hashOfStruct = HASHER(stk, sizeof(stack_t));
@@ -126,7 +129,7 @@ WORK_RES ResizeUp(stack_t *stk)
     }
     stk -> data = temp;
 
-    ON_DBG(
+    ON_CANARY(
         stk -> canaryData = (stk -> data)++;
         *(stk -> canaryData) = STACK_CANARY_FIRST;
         *(stk -> data + stk -> capacity) = STACK_CANARY_SECOND;
@@ -158,7 +161,7 @@ WORK_RES StackPop(stack_t *stk, stackDataType *elem ON_DBG(, const char *fileCal
         )
         return $ERR("NOT VALID STACK GOT BY FUNCTION", statusCode);
     }
-    
+
     if (stk -> size == 0) {
         ON_DBG(
             ErrInfo errInfo = {};
@@ -176,7 +179,7 @@ WORK_RES StackPop(stack_t *stk, stackDataType *elem ON_DBG(, const char *fileCal
 
     *elem = (stk -> data)[--(stk -> size)];
 
-    ON_DBG(
+    ON_HASH(
         (stk -> data)[(stk -> size)] = STACK_EL_POISON;
         stk -> hashOfData = HASHER(stk -> data, (stk -> capacity) * sizeof(stackDataType));
         stk -> hashOfStruct = 0;
@@ -216,7 +219,7 @@ WORK_RES ResizeDown(stack_t *stk)
     }
     stk -> data = temp;
 
-    ON_DBG(
+    ON_CANARY(
         stk -> canaryData = (stk -> data)++;
         *(stk -> canaryData) = STACK_CANARY_FIRST;
         *(stk -> data + stk -> capacity) = STACK_CANARY_SECOND;
@@ -239,7 +242,7 @@ WORK_RES StackDtor(stack_t *stk)
         return $ERR("WRONG DATA IN STACK", statusCode);
     }
 
-    free(ON_DBG(--)(stk -> data));
+    free(ON_CANARY(--)(stk -> data));
     stk -> data = 0;
     stk -> capacity = 0;
     stk -> size = 0;

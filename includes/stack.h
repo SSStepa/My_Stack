@@ -13,6 +13,18 @@
 #define ON_DBG(...)
 #endif
 
+#ifdef CANARY_PROT
+#define ON_CANARY(...) __VA_ARGS__
+#else
+#define ON_CANARY(...)
+#endif
+
+#ifdef HASH_PROT
+#define ON_HASH(...) __VA_ARGS__
+#else
+#define ON_HASH(...)
+#endif
+
 #define STACK_CTOR(stk, capacity) StackCtor(stk, capacity \
     ON_DBG(         \
         ,TO_STR(stk), \
@@ -43,7 +55,7 @@ const unsigned long long STACK_STRUCT_RIGHT_CANARY = 0xC0FFFFE;
 
 
 struct stack_t {
-    ON_DBG(unsigned long long leftCanary;)
+    ON_CANARY(unsigned long long leftCanary;)
 
     stackDataType *data;
     size_t size;
@@ -54,12 +66,16 @@ struct stack_t {
     const char *fileCreationName;
     int   creationLineName;
     const char *creationFunctionName;
+    )
+    ON_CANARY(
     stackDataType *canaryData;
+    )
+    ON_HASH(
     unsigned long long hashOfData;
     unsigned long long hashOfStruct;
     )
 
-    ON_DBG(unsigned long long rightCanary;)
+    ON_CANARY(unsigned long long rightCanary;)
 };
 
 WORK_RES StackCtor(
